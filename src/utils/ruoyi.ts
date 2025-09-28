@@ -185,7 +185,20 @@ export const handleTree = <T>(data: any[], id?: string, parentId?: string, child
       parentObj[config.childrenList].push(d);
     }
   }
-  return tree;
+
+  // 递归排序每一层的 children，并按 sortOrder 排序
+  const sortTree = (nodes: any[]) => {
+    return nodes
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)) // 按照 sortOrder 排序，如果不存在则默认为 0
+      .map((node) => {
+        if (node[config.childrenList] && node[config.childrenList].length > 0) {
+          node[config.childrenList] = sortTree(node[config.childrenList]); // 递归排序子节点
+        }
+        return node;
+      });
+  };
+
+  return sortTree(tree);
 };
 
 /**
