@@ -255,5 +255,6 @@ const handleDelete = async (row: TreeVO) => {
 
 onMounted(() => {
   getList();
+  getTreeselect();
 });
 </script>
