@@ -77,6 +77,9 @@
         <el-table-column label="备注" align="center" prop="remark" />
         <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
           <template #default="scope">
+            <el-tooltip content="试题管理" placement="top">
+              <el-button link type="primary" icon="List" @click="handleQuestion(scope.row)" v-hasPermi="['edu:question:list']"></el-button>
+            </el-tooltip>
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:questionBank:edit']"></el-button>
             </el-tooltip>
@@ -144,6 +147,7 @@ type QuestionBankCategoryOption = {
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { edu_question_bank_status } = toRefs<any>(proxy?.useDict('edu_question_bank_status'));
+const router = useRouter();
 
 const questionBankList = ref<QuestionBankVO[]>([]);
 const questionBankCategoryOptions = ref<QuestionBankCategoryOption[]>([]);
@@ -310,6 +314,10 @@ const handleExport = () => {
     },
     `questionBank_${new Date().getTime()}.xlsx`
   );
+};
+
+const handleQuestion = (row?: QuestionBankVO) => {
+  router.push('/question/bank/question/index/' + row.id);
 };
 
 onMounted(() => {
