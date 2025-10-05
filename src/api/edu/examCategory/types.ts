@@ -29,10 +29,10 @@ export interface ExamCategoryVO {
    */
   remark: string;
 
-    /**
-     * 子对象
-     */
-    children: ExamCategoryVO[];
+  /**
+   * 子对象
+   */
+  children: ExamCategoryVO[];
 }
 
 export interface ExamCategoryForm extends BaseEntity {
@@ -65,11 +65,9 @@ export interface ExamCategoryForm extends BaseEntity {
    * 备注
    */
   remark?: string;
-
 }
 
 export interface ExamCategoryQuery {
-
   /**
    * 父级分类ID,根节点为0
    */
