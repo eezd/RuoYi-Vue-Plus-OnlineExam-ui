@@ -83,8 +83,8 @@
         <!-- <el-table-column label="考试ID" align="center" prop="id" v-if="true" /> -->
         <el-table-column label="考试名称" align="center" prop="examName" />
         <!-- <el-table-column label="考试描述" align="center" prop="examDesc" /> -->
-        <el-table-column label="考试分类ID" align="center" prop="categoryId" />
-        <el-table-column label="关联题库ID" align="center" prop="bankId" />
+        <el-table-column label="考试分类" align="center" prop="categoryName" />
+        <el-table-column label="关联题库" align="center" prop="bankName" />
         <el-table-column label="考试时长" align="center" prop="examTime" />
         <el-table-column label="考试开始时间" align="center" prop="startTime" width="180">
           <template #default="scope">

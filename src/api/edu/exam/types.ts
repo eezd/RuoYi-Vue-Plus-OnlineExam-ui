@@ -20,9 +20,19 @@ export interface ExamVO {
   categoryId: string | number;
 
   /**
+   * 考试分类名称
+   */
+  categoryName: string;
+
+  /**
    * 关联题库ID
    */
   bankId: string | number;
+
+  /**
+   * 关联题库名称
+   */
+  bankName: string;
 
   /**
    * 考试时长（分钟）
