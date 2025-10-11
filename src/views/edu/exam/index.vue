@@ -112,8 +112,11 @@
           </template>
         </el-table-column>
         <el-table-column label="备注" align="center" prop="remark" />
-        <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width" width="110">
           <template #default="scope">
+            <el-tooltip content="绑定班级" placement="top">
+              <el-button link type="primary" icon="Link" @click="handleBindClass(scope.row)" v-hasPermi="['edu:exam:edit']"></el-button>
+            </el-tooltip>
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:exam:edit']"></el-button>
             </el-tooltip>
@@ -163,7 +166,7 @@
           </el-form-item>
         </el-form>
 
-        <el-table v-loading="loading" border :data="questionBankList" @selection-change="handleSelectionChange">
+        <el-table v-loading="loadingBank" border :data="questionBankList" @selection-change="handleSelectionChange">
           <!-- <el-table-column label="题库ID" align="center" prop="id" v-if="true" /> -->
           <el-table-column label="题库名称" align="center" prop="bankName" />
           <el-table-column label="题库描述" align="center" prop="bankDesc" />
@@ -254,10 +257,13 @@
         </div>
       </template>
     </el-dialog>
+
+    <dialog-bind-class ref="dialogBindClassRef" v-model:visible="dialogBindClassData.visible" :exam-id="dialogBindClassData.examId" />
   </div>
 </template>
 
 <script setup name="Exam" lang="ts">
+import dialogBindClass from './dialogBindClass.vue';
 import { listExam, getExam, delExam, addExam, updateExam } from '@/api/edu/exam';
 import { ExamVO, ExamQuery, ExamForm } from '@/api/edu/exam/types';
 import { listExamCategory } from '@/api/edu/examCategory';
@@ -310,6 +316,7 @@ const initFormData: ExamForm = {
   status: undefined,
   remark: undefined
 };
+
 const data = reactive<PageData<ExamForm, ExamQuery>>({
   form: { ...initFormData },
   queryParams: {
@@ -427,9 +434,9 @@ const unbindBank = () => {
   form.value.bankId = null;
 };
 /** 搜索按钮操作 */
-const handleQueryBank = () => {
+const handleQueryBank = async () => {
   queryBankParams.value.pageNum = 1;
-  getListBank();
+  await getListBank();
 };
 
 /** 重置按钮操作 */
@@ -440,6 +447,22 @@ const resetQueryBank = () => {
 
 //#endregion
 
+//#region 绑定班级
+
+export interface DialogBindClassOption extends DialogOption {
+  examId: number;
+}
+const dialogBindClassData = reactive<DialogOption & { examId: number | string | null }>({
+  visible: false,
+  title: '',
+  examId: null
+});
+const handleBindClass = (row: ExamVO) => {
+  dialogBindClassData.visible = true;
+  dialogBindClassData.title = '绑定班级';
+  dialogBindClassData.examId = row.id;
+};
+//#endregion
 /** 取消按钮 */
 const cancel = () => {
   reset();
@@ -484,6 +507,7 @@ const handleUpdate = async (row?: ExamVO) => {
   const _id = row?.id || ids.value[0];
   const res = await getExam(_id);
   Object.assign(form.value, res.data);
+  await handleQueryBank();
   dialog.visible = true;
   dialog.title = '修改考试信息';
 };
