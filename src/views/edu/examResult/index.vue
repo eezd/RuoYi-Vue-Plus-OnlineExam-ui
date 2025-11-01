@@ -11,20 +11,10 @@
               <el-input v-model="queryParams.studentId" placeholder="请输入学生ID" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="开始考试时间" prop="startTime">
-              <el-date-picker clearable
-                v-model="queryParams.startTime"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="请选择开始考试时间"
-              />
+              <el-date-picker clearable v-model="queryParams.startTime" type="date" value-format="YYYY-MM-DD" placeholder="请选择开始考试时间" />
             </el-form-item>
             <el-form-item label="交卷时间" prop="submitTime">
-              <el-date-picker clearable
-                v-model="queryParams.submitTime"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="请选择交卷时间"
-              />
+              <el-date-picker clearable v-model="queryParams.submitTime" type="date" value-format="YYYY-MM-DD" placeholder="请选择交卷时间" />
             </el-form-item>
             <el-form-item label="实际考试时长" prop="examTime">
               <el-input v-model="queryParams.examTime" placeholder="请输入实际考试时长" clearable @keyup.enter="handleQuery" />
@@ -69,10 +59,14 @@
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['edu:examResult:add']">新增</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['edu:examResult:edit']">修改</el-button>
+            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['edu:examResult:edit']"
+              >修改</el-button
+            >
           </el-col>
           <el-col :span="1.5">
-            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['edu:examResult:remove']">删除</el-button>
+            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['edu:examResult:remove']"
+              >删除</el-button
+            >
           </el-col>
           <el-col :span="1.5">
             <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['edu:examResult:export']">导出</el-button>
@@ -105,13 +99,13 @@
         <el-table-column label="答题快照" align="center" prop="answerSnapshot" />
         <el-table-column label="是否已交卷" align="center" prop="isSubmit">
           <template #default="scope">
-            <dict-tag :options="edu_exam_result_submit" :value="scope.row.isSubmit"/>
+            <dict-tag :options="edu_exam_result_submit" :value="scope.row.isSubmit" />
           </template>
         </el-table-column>
         <el-table-column label="客户端IP" align="center" prop="clientIp" />
         <el-table-column label="浏览器信息" align="center" prop="userAgent" />
         <el-table-column label="备注" align="center" prop="remark" />
-        <el-table-column label="操作" align="center" fixed="right"  class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:examResult:edit']"></el-button>
@@ -135,19 +129,11 @@
           <el-input v-model="form.studentId" placeholder="请输入学生ID" />
         </el-form-item>
         <el-form-item label="开始考试时间" prop="startTime">
-          <el-date-picker clearable
-            v-model="form.startTime"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="请选择开始考试时间">
+          <el-date-picker clearable v-model="form.startTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择开始考试时间">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="交卷时间" prop="submitTime">
-          <el-date-picker clearable
-            v-model="form.submitTime"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="请选择交卷时间">
+          <el-date-picker clearable v-model="form.submitTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择交卷时间">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="实际考试时长" prop="examTime">
@@ -175,10 +161,10 @@
           <el-input v-model="form.clientIp" placeholder="请输入客户端IP" />
         </el-form-item>
         <el-form-item label="浏览器信息" prop="userAgent">
-            <el-input v-model="form.userAgent" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.userAgent" type="textarea" placeholder="请输入内容" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -230,10 +216,10 @@ const initFormData: ExamResultForm = {
   isSubmit: undefined,
   clientIp: undefined,
   userAgent: undefined,
-  remark: undefined,
-}
+  remark: undefined
+};
 const data = reactive<PageData<ExamResultForm, ExamResultQuery>>({
-  form: {...initFormData},
+  form: { ...initFormData },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
@@ -251,22 +237,13 @@ const data = reactive<PageData<ExamResultForm, ExamResultQuery>>({
     isSubmit: undefined,
     clientIp: undefined,
     userAgent: undefined,
-    params: {
-    }
+    params: {}
   },
   rules: {
-    id: [
-      { required: true, message: "结果ID不能为空", trigger: "blur" }
-    ],
-    examId: [
-      { required: true, message: "考试ID不能为空", trigger: "blur" }
-    ],
-    studentId: [
-      { required: true, message: "学生ID不能为空", trigger: "blur" }
-    ],
-    startTime: [
-      { required: true, message: "开始考试时间不能为空", trigger: "blur" }
-    ],
+    id: [{ required: true, message: '结果ID不能为空', trigger: 'blur' }],
+    examId: [{ required: true, message: '考试ID不能为空', trigger: 'blur' }],
+    studentId: [{ required: true, message: '学生ID不能为空', trigger: 'blur' }],
+    startTime: [{ required: true, message: '开始考试时间不能为空', trigger: 'blur' }]
   }
 });
 
@@ -279,55 +256,55 @@ const getList = async () => {
   examResultList.value = res.rows;
   total.value = res.total;
   loading.value = false;
-}
+};
 
 /** 取消按钮 */
 const cancel = () => {
   reset();
   dialog.visible = false;
-}
+};
 
 /** 表单重置 */
 const reset = () => {
-  form.value = {...initFormData};
+  form.value = { ...initFormData };
   examResultFormRef.value?.resetFields();
-}
+};
 
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
   getList();
-}
+};
 
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   handleQuery();
-}
+};
 
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: ExamResultVO[]) => {
-  ids.value = selection.map(item => item.id);
+  ids.value = selection.map((item) => item.id);
   single.value = selection.length != 1;
   multiple.value = !selection.length;
-}
+};
 
 /** 新增按钮操作 */
 const handleAdd = () => {
   reset();
   dialog.visible = true;
-  dialog.title = "添加考试结果";
-}
+  dialog.title = '添加考试结果';
+};
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: ExamResultVO) => {
   reset();
-  const _id = row?.id || ids.value[0]
+  const _id = row?.id || ids.value[0];
   const res = await getExamResult(_id);
   Object.assign(form.value, res.data);
   dialog.visible = true;
-  dialog.title = "修改考试结果";
-}
+  dialog.title = '修改考试结果';
+};
 
 /** 提交按钮 */
 const submitForm = () => {
@@ -335,32 +312,36 @@ const submitForm = () => {
     if (valid) {
       buttonLoading.value = true;
       if (form.value.id) {
-        await updateExamResult(form.value).finally(() =>  buttonLoading.value = false);
+        await updateExamResult(form.value).finally(() => (buttonLoading.value = false));
       } else {
-        await addExamResult(form.value).finally(() =>  buttonLoading.value = false);
+        await addExamResult(form.value).finally(() => (buttonLoading.value = false));
       }
-      proxy?.$modal.msgSuccess("操作成功");
+      proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
     }
   });
-}
+};
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: ExamResultVO) => {
   const _ids = row?.id || ids.value;
-  await proxy?.$modal.confirm('是否确认删除考试结果编号为"' + _ids + '"的数据项？').finally(() => loading.value = false);
+  await proxy?.$modal.confirm('是否确认删除考试结果编号为"' + _ids + '"的数据项？').finally(() => (loading.value = false));
   await delExamResult(_ids);
-  proxy?.$modal.msgSuccess("删除成功");
+  proxy?.$modal.msgSuccess('删除成功');
   await getList();
-}
+};
 
 /** 导出按钮操作 */
 const handleExport = () => {
-  proxy?.download('edu/examResult/export', {
-    ...queryParams.value
-  }, `examResult_${new Date().getTime()}.xlsx`)
-}
+  proxy?.download(
+    'edu/examResult/export',
+    {
+      ...queryParams.value
+    },
+    `examResult_${new Date().getTime()}.xlsx`
+  );
+};
 
 onMounted(() => {
   getList();

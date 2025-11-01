@@ -13,7 +13,7 @@
         <div class="class-info">
           <el-tag type="primary" size="large" effect="plain">
             <i class="el-icon-school"></i>
-            当前班级：{{ currentClass }}
+            当前班级：{{ userStore.$state.deptName }}
           </el-tag>
         </div>
       </div>
