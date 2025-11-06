@@ -1,214 +1,264 @@
 <template>
   <div class="exam-container">
-    <!-- 顶部信息栏 -->
+    <!-- 头部信息栏 -->
     <el-card class="exam-header" shadow="never">
       <div class="header-content">
         <div class="exam-info">
           <h2>{{ examInfo.title }}</h2>
-          <div class="info-tags">
-            <el-tag type="info">总分: {{ examInfo.totalScore }}分</el-tag>
-            <el-tag type="warning">题目数: {{ examInfo.questionCount }}</el-tag>
-          </div>
+          <el-tag type="info">总分: {{ examInfo.totalScore }}分</el-tag>
+          <el-tag type="warning" style="margin-left: 10px">题目数: {{ questions.length }}</el-tag>
         </div>
-        <div class="exam-timer">
-          <el-statistic title="剩余时间" :value="remainingTime">
-            <template #suffix>
-              <el-icon><Timer /></el-icon>
-            </template>
-          </el-statistic>
+        <div class="time-info">
+          <el-statistic :value="remainingTime" title="剩余时间(秒)" />
+          <el-button type="primary" @click="handleSubmit" :loading="submitting" style="margin-top: 10px"> 提交试卷 </el-button>
         </div>
       </div>
     </el-card>
 
     <!-- 答题区域 -->
     <div class="exam-content">
-      <el-card class="question-card">
-        <div class="question-header">
-          <span class="question-number">第 {{ currentQuestionIndex + 1 }} 题</span>
-          <el-tag :type="getQuestionTypeTag(currentQuestion.question_type)">
-            {{ getQuestionTypeText(currentQuestion.question_type) }}
-          </el-tag>
-          <el-tag type="danger" effect="plain">{{ currentQuestion.score }}分</el-tag>
-        </div>
+      <!-- 题目列表 -->
+      <el-card class="question-area" shadow="never">
+        <div v-for="(question, index) in questions" :key="question.id" class="question-item">
+          <div class="question-header">
+            <span class="question-number">第 {{ index + 1 }} 题</span>
+            <el-tag :type="getQuestionTypeTag(question.questionType)" size="small">
+              {{ getQuestionTypeName(question.questionType) }}
+            </el-tag>
+            <el-tag type="info" size="small" style="margin-left: 5px">{{ question.score }}分</el-tag>
+            <el-tag :type="getDifficultyTag(question.difficulty)" size="small" style="margin-left: 5px">
+              {{ getDifficultyName(question.difficulty) }}
+            </el-tag>
+          </div>
 
-        <div class="question-title">
-          <span class="title-text">{{ currentQuestion.question_title }}</span>
-        </div>
+          {{ question }}
 
-        <!-- 单选题 -->
-        <el-radio-group v-if="currentQuestion.question_type === '1'" v-model="answers[currentQuestion.id]" class="answer-options">
-          <el-radio v-for="(option, key) in currentQuestion.options" :key="key" :label="key" class="answer-option">
-            <span class="option-label">{{ key }}.</span>
-            <span class="option-content">{{ option }}</span>
-          </el-radio>
-        </el-radio-group>
+          <div class="question-title">{{ question.question_title }}</div>
 
-        <!-- 多选题 -->
-        <el-checkbox-group v-else-if="currentQuestion.question_type === '2'" v-model="answers[currentQuestion.id]" class="answer-options">
-          <el-checkbox v-for="(option, key) in currentQuestion.options" :key="key" :label="key" class="answer-option">
-            <span class="option-label">{{ key }}.</span>
-            <span class="option-content">{{ option }}</span>
-          </el-checkbox>
-        </el-checkbox-group>
+          <!-- 单选题 -->
+          <el-radio-group
+            v-if="question.questionType === '1'"
+            v-model="answers[question.id]"
+            class="question-options"
+            @change="updateChooseAnswer(question)"
+          >
+            <el-radio v-for="(value, key) in question.options" :key="key" :value="key" class="option-item"> {{ key }}. {{ value }} </el-radio>
+          </el-radio-group>
 
-        <!-- 判断题 -->
-        <el-radio-group v-else-if="currentQuestion.question_type === '3'" v-model="answers[currentQuestion.id]" class="answer-options judge-options">
-          <el-radio label="A" class="answer-option">
-            <el-icon><Select /></el-icon> 正确
-          </el-radio>
-          <el-radio label="B" class="answer-option">
-            <el-icon><CloseBold /></el-icon> 错误
-          </el-radio>
-        </el-radio-group>
+          <!-- 多选题 -->
+          <el-checkbox-group
+            v-if="question.questionType === '2'"
+            v-model="answers[question.id]"
+            class="question-options"
+            @change="updateChooseAnswer(question)"
+          >
+            <el-checkbox v-for="(value, key) in question.options" :key="key" :value="key" class="option-item"> {{ key }}. {{ value }} </el-checkbox>
+          </el-checkbox-group>
 
-        <!-- 导航按钮 -->
-        <div class="question-navigation">
-          <el-button @click="prevQuestion" :disabled="currentQuestionIndex === 0"> 上一题 </el-button>
-          <el-button type="primary" @click="nextQuestion" :disabled="currentQuestionIndex === questions.length - 1"> 下一题 </el-button>
+          <!-- 判断题 -->
+          <el-radio-group
+            v-if="question.questionType === '3'"
+            v-model="answers[question.id]"
+            class="question-options"
+            @change="updateChooseAnswer(question)"
+          >
+            <el-radio :value="'A'" class="option-item">正确</el-radio>
+            <el-radio :value="'B'" class="option-item">错误</el-radio>
+          </el-radio-group>
         </div>
       </el-card>
 
       <!-- 答题卡 -->
-      <el-card class="answer-sheet">
+      <el-card class="answer-card" shadow="never">
         <template #header>
-          <div class="card-header">
-            <span>答题卡</span>
-          </div>
+          <div class="card-header">答题卡</div>
         </template>
-
         <div class="answer-grid">
           <div
             v-for="(question, index) in questions"
             :key="question.id"
-            :class="[
-              'answer-item',
-              {
-                'active': index === currentQuestionIndex,
-                'answered': isAnswered(question.id)
-              }
-            ]"
-            @click="jumpToQuestion(index)"
+            :class="['answer-cell', getAnswerStatus(question.id)]"
+            @click="scrollToQuestion(index)"
           >
             {{ index + 1 }}
           </div>
         </div>
-
         <div class="answer-legend">
           <div class="legend-item">
             <span class="legend-box answered"></span>
             <span>已答</span>
           </div>
           <div class="legend-item">
-            <span class="legend-box"></span>
+            <span class="legend-box unanswered"></span>
             <span>未答</span>
           </div>
-          <div class="legend-item">
-            <span class="legend-box active"></span>
-            <span>当前</span>
-          </div>
         </div>
-
-        <el-button type="success" class="submit-btn" @click="handleSubmit" :loading="submitting"> 交卷 </el-button>
       </el-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { startStudentExam } from '@/api/edu/studentExam';
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Timer, Select, CloseBold } from '@element-plus/icons-vue';
+import { EduExamResult } from '@/api/edu/studentExam/types';
+import { submitStudentExam } from '@/api/edu/studentExam';
 
-// 类型定义
-interface Question {
-  id: number;
-  question_type: string;
-  question_title: string;
-  options?: Record<string, string>;
-  correct_answer: string;
-  score: number;
-  difficulty: string;
-}
+const route = useRoute();
+const router = useRouter();
+
+const examResultId = ref(0);
+const examId = computed(() => route.query.examId as string);
+
+// 添加更新 chooseAnswer 的方法
+const updateChooseAnswer = (question: any) => {
+  const answer = answers[question.id];
+
+  if (question.questionType === '2') {
+    // 多选题：数组转字符串
+    question.chooseAnswer = Array.isArray(answer) ? answer.sort().join(',') : '';
+  } else {
+    // 单选题和判断题：直接赋值
+    question.chooseAnswer = answer || '';
+  }
+
+  console.log(`题目 ${question.id} 更新答案:`, question.chooseAnswer);
+};
+
+// 初始化考试页面
+const initStartExam = async () => {
+  if (examId.value === undefined) {
+    await ElMessageBox.confirm('考试ID为空，无法开始考试。请检查链接或重新进入。', '警告', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    });
+    router.go(-1);
+  }
+
+  const result = await startStudentExam(examId.value, navigator.userAgent);
+  // examInfo.totalScore = result.data.totalScore;
+  examResultId.value = result.data.id;
+  examInfo.startTime = new Date(result.data.startTime);
+  examInfo.examTime = result.data.examTime;
+
+  const answerSnapshot = result.data.answerSnapshot;
+
+  // 反序列化答题快照
+  if (answerSnapshot) {
+    try {
+      const snapshotData = JSON.parse(answerSnapshot);
+      if (Array.isArray(snapshotData)) {
+        snapshotData.forEach((item: any) => {
+          // 直接展示题目内容
+          console.log('答题快照数据：', item.options); // 打印答题快照数据
+          const question = {
+            id: item.id,
+            bankId: item.bankId,
+            questionType: item.questionType,
+            questionTitle: item.questionTitle,
+            options: JSON.parse(item.options), // 解析选项
+            difficulty: item.difficulty,
+            score: item.score,
+            chooseAnswer: item.chooseAnswer || ''
+          };
+          questions.value.push(question);
+
+          // 打印题目和选项
+          // console.log(`题目ID: ${question.id}`);
+          // console.log(`题目: ${question.questionTitle}`);
+          // console.log(`选项:`, question.options);
+          // console.log(`所选答案: ${question.chooseAnswer}`);
+        });
+      } else {
+        console.error('答题快照格式不正确');
+      }
+    } catch (e) {
+      console.error('反序列化答题快照失败', e);
+    }
+  }
+
+  // 初始化答案对象
+  questions.value.forEach((q) => {
+    if (q.questionType === '2') {
+      // 多选题：字符串转数组
+      answers[q.id] = q.chooseAnswer ? q.chooseAnswer.split(',').filter(Boolean) : [];
+    } else {
+      // 单选题和判断题：直接使用字符串
+      answers[q.id] = q.chooseAnswer || '';
+    }
+  });
+
+  // 检查 examInfo 是否已经设置好
+  if (examInfo.startTime && examInfo.examTime) {
+    startTimer();
+  } else {
+    console.error('考试信息不完整，无法启动计时器');
+  }
+  // console.log('初始化后的题目:', questions.value);
+  // console.log('初始化后的答案:', answers);
+};
 
 interface ExamInfo {
-  title: string;
   totalScore: number;
-  questionCount: number;
-  examTime: number;
-}
-
-interface ExamResult {
-  exam_id: number;
-  student_id: number;
-  start_time: string;
-  answer_snapshot: Record<number, string | string[]>;
+  startTime: Date;
+  examTime: number; // 分钟
 }
 
 // 响应式数据
 const examInfo = reactive<ExamInfo>({
-  title: '语文基础知识测试',
-  totalScore: 7,
-  questionCount: 3,
-  examTime: 60 // 分钟
+  totalScore: 100,
+  startTime: new Date(),
+  examTime: 60 // 默认60分钟
 });
 
-const questions = ref<Question[]>([
-  {
-    id: 1,
-    question_type: '1',
-    question_title: '下列词语中加点字的读音，完全正确的一项是？',
-    options: {
-      'A': '惩(chéng)罚',
-      'B': '应(yīng)届',
-      'C': '参(cēn)差不齐',
-      'D': '提(dī)防'
-    },
-    correct_answer: 'A',
-    score: 2,
-    difficulty: '1'
-  },
-  {
-    id: 2,
-    question_type: '3',
-    question_title: '《朝花夕拾》是鲁迅先生唯一的一本散文集。',
-    options: {
-      'A': '正确',
-      'B': '错误'
-    },
-    correct_answer: 'A',
-    score: 2,
-    difficulty: '1'
-  },
-  {
-    id: 4,
-    question_type: '2',
-    question_title: '下列作家中，属于"唐宋八大家"的有？',
-    options: {
-      'A': '李白',
-      'B': '韩愈',
-      'C': '苏轼',
-      'D': '杜甫',
-      'E': '欧阳修'
-    },
-    correct_answer: 'B,C,E',
-    score: 3,
-    difficulty: '2'
-  }
-]);
-
-const currentQuestionIndex = ref(0);
+const questions = ref<any[]>([]);
 const answers = reactive<Record<number, string | string[]>>({});
-const remainingTime = ref(examInfo.examTime * 60); // 转换为秒
-const submitting = ref(false);
-const startTime = ref(new Date().toISOString());
-
-let timer: number | null = null;
+const startTime = ref<Date>(new Date());
+const remainingTime = ref<number>(0);
+const timer = ref<number | null>(null);
+const submitting = ref<boolean>(false);
+const userAgent = ref<string>('');
+const clientIp = ref<string>('');
 
 // 计算属性
-const currentQuestion = computed(() => questions.value[currentQuestionIndex.value]);
+const answeredCount = computed(() => {
+  return Object.keys(answers).filter((key) => {
+    const answer = answers[Number(key)];
+    return Array.isArray(answer) ? answer.length > 0 : answer !== '';
+  }).length;
+});
 
-// 方法
-const getQuestionTypeText = (type: string): string => {
+// 倒计时
+const startTimer = () => {
+  const currentTime = new Date(); // 当前时间
+  const timeDifference = Math.floor((currentTime.getTime() - examInfo.startTime.getTime()) / 1000); // 当前时间与考试开始时间的差，单位是秒
+  console.log('当前时间：', currentTime.getTime());
+  console.log('考试开始时间：', examInfo.startTime.getTime());
+  console.log('时间差（秒）：', timeDifference);
+
+  let remainingTimeInSeconds = examInfo.examTime * 60 - timeDifference; // 剩余时间（秒）
+
+  if (remainingTimeInSeconds <= 0) {
+    remainingTimeInSeconds = 0;
+    ElMessage.warning('考试时间已到，自动提交试卷');
+    handleSubmit();
+  }
+
+  remainingTime.value = remainingTimeInSeconds;
+
+  timer.value = window.setInterval(() => {
+    remainingTime.value--; // 每秒钟减少一秒
+    if (remainingTime.value <= 0) {
+      clearInterval(timer.value!);
+      ElMessage.warning('考试时间已到，自动提交试卷');
+      handleSubmit();
+    }
+  }, 1000);
+};
+// 获取题目类型名称
+const getQuestionTypeName = (type: string): string => {
   const typeMap: Record<string, string> = {
     '1': '单选题',
     '2': '多选题',
@@ -217,358 +267,266 @@ const getQuestionTypeText = (type: string): string => {
   return typeMap[type] || '未知';
 };
 
-const getQuestionTypeTag = (type: string): string => {
+// 获取题目类型标签颜色
+const getQuestionTypeTag = (type: string): any => {
   const tagMap: Record<string, string> = {
-    '1': 'primary',
-    '2': 'success',
-    '3': 'warning'
+    '1': 'success',
+    '2': 'warning',
+    '3': 'info'
   };
-  return tagMap[type] || 'info';
+  return tagMap[type] || '';
 };
 
-const isAnswered = (questionId: number): boolean => {
+// 获取难度名称
+const getDifficultyName = (difficulty: string): any => {
+  const diffMap: Record<string, string> = {
+    '1': '简单',
+    '2': '中等',
+    '3': '困难'
+  };
+  return diffMap[difficulty] || '未知';
+};
+
+// 获取难度标签颜色
+const getDifficultyTag = (difficulty: string): any => {
+  const tagMap: Record<string, string> = {
+    '1': 'success',
+    '2': 'warning',
+    '3': 'danger'
+  };
+  return tagMap[difficulty] || '';
+};
+
+// 获取答题状态
+const getAnswerStatus = (questionId: number): string => {
   const answer = answers[questionId];
   if (Array.isArray(answer)) {
-    return answer.length > 0;
+    return answer.length > 0 ? 'answered' : 'unanswered';
   }
-  return !!answer;
+  return answer ? 'answered' : 'unanswered';
 };
 
-const prevQuestion = () => {
-  if (currentQuestionIndex.value > 0) {
-    currentQuestionIndex.value--;
-  }
-};
-
-const nextQuestion = () => {
-  if (currentQuestionIndex.value < questions.value.length - 1) {
-    currentQuestionIndex.value++;
+// 滚动到指定题目
+const scrollToQuestion = (index: number) => {
+  const questionItems = document.querySelectorAll('.question-item');
+  if (questionItems[index]) {
+    questionItems[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 };
 
-const jumpToQuestion = (index: number) => {
-  currentQuestionIndex.value = index;
-};
-
+// 提交试卷
 const handleSubmit = async () => {
-  // 检查是否有未答题
-  const unansweredCount = questions.value.filter((q) => !isAnswered(q.id)).length;
-
-  if (unansweredCount > 0) {
-    try {
-      await ElMessageBox.confirm(`还有 ${unansweredCount} 道题未作答，确定要交卷吗？`, '提示', {
-        confirmButtonText: '确定交卷',
-        cancelButtonText: '继续答题',
-        type: 'warning'
-      });
-    } catch {
-      return;
-    }
-  } else {
-    try {
-      await ElMessageBox.confirm('确定要提交试卷吗？提交后将不能修改答案。', '确认交卷', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'success'
-      });
-    } catch {
-      return;
-    }
-  }
-
-  submitting.value = true;
-
-  // 构建提交数据
-  const result: ExamResult = {
-    exam_id: 1, // 实际应从路由或props获取
-    student_id: 1, // 实际应从用户信息获取
-    start_time: startTime.value,
-    answer_snapshot: answers
-  };
+  console.log(questions);
+  await ElMessageBox.confirm(`确定要提交吗？`, '提示', {
+    confirmButtonText: '确定提交',
+    cancelButtonText: '继续答题',
+    type: 'warning'
+  });
 
   try {
-    // 这里应该调用API提交数据
-    console.log('提交数据:', result);
+    // 停止计时器
+    if (timer.value) {
+      clearInterval(timer.value);
+    }
+    const data = { id: examResultId.value, answerSnapshot: JSON.stringify(questions.value) };
 
-    // 模拟API调用
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    ElMessage.success('交卷成功！');
-
-    // 实际应该跳转到成绩页面
-    // router.push('/exam/result')
+    console.log('提交数据:' + data);
+    await submitStudentExam(data);
+    ElMessage.success('提交成功！');
   } catch (error) {
-    ElMessage.error('交卷失败，请重试');
+    console.error('提交失败:', error);
+    ElMessage.error('提交失败，请重试');
   } finally {
     submitting.value = false;
   }
 };
 
-const startTimer = () => {
-  timer = window.setInterval(() => {
-    if (remainingTime.value > 0) {
-      remainingTime.value--;
-
-      // 剩余5分钟提醒
-      if (remainingTime.value === 300) {
-        ElMessage.warning('考试还剩5分钟，请注意时间！');
-      }
-
-      // 时间到自动交卷
-      if (remainingTime.value === 0) {
-        ElMessage.error('考试时间已到，自动交卷！');
-        handleSubmit();
-      }
-    }
-  }, 1000);
-};
-
-// 生命周期
-onMounted(() => {
-  startTimer();
-
-  // 初始化多选题答案为数组
-  questions.value.forEach((q) => {
-    if (q.question_type === '2' && !answers[q.id]) {
-      answers[q.id] = [];
-    }
-  });
+// 页面加载时初始化
+onMounted(async () => {
+  initStartExam();
 });
 
+// 页面卸载时清理定时器
 onUnmounted(() => {
-  if (timer) {
-    clearInterval(timer);
+  if (timer.value) {
+    clearInterval(timer.value);
   }
 });
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .exam-container {
   min-height: 100vh;
-  background: #f5f7fa;
+  background-color: #f5f7fa;
   padding: 20px;
 }
 
 .exam-header {
   margin-bottom: 20px;
+}
 
-  .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .exam-info {
-      h2 {
-        margin: 0 0 10px 0;
-        color: #303133;
-      }
+.exam-info h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #303133;
+}
 
-      .info-tags {
-        display: flex;
-        gap: 10px;
-      }
-    }
-  }
+.time-info {
+  text-align: center;
 }
 
 .exam-content {
-  display: grid;
-  grid-template-columns: 1fr 320px;
+  display: flex;
   gap: 20px;
-  align-items: start;
 }
 
-.question-card {
-  .question-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ebeef5;
-
-    .question-number {
-      font-size: 18px;
-      font-weight: bold;
-      color: #409eff;
-    }
-  }
-
-  .question-title {
-    font-size: 16px;
-    line-height: 1.8;
-    color: #303133;
-    margin-bottom: 25px;
-    padding: 15px;
-    background: #f5f7fa;
-    border-radius: 4px;
-
-    .title-text {
-      font-weight: 500;
-    }
-  }
-
-  .answer-options {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
-
-    .answer-option {
-      padding: 15px;
-      border: 2px solid #ebeef5;
-      border-radius: 8px;
-      transition: all 0.3s;
-      cursor: pointer;
-
-      &:hover {
-        border-color: #409eff;
-        background: #ecf5ff;
-      }
-
-      :deep(.el-radio__label),
-      :deep(.el-checkbox__label) {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 15px;
-        width: 100%;
-      }
-
-      .option-label {
-        font-weight: bold;
-        color: #409eff;
-        min-width: 20px;
-      }
-
-      .option-content {
-        color: #606266;
-        flex: 1;
-      }
-    }
-
-    &.judge-options {
-      flex-direction: row;
-      justify-content: center;
-      gap: 40px;
-
-      .answer-option {
-        min-width: 150px;
-        justify-content: center;
-
-        :deep(.el-radio__label) {
-          justify-content: center;
-          font-size: 16px;
-          font-weight: 500;
-        }
-      }
-    }
-  }
-
-  .question-navigation {
-    display: flex;
-    justify-content: space-between;
-    padding-top: 20px;
-    border-top: 1px solid #ebeef5;
-  }
+.question-area {
+  flex: 1;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
-.answer-sheet {
+.question-item {
+  padding: 20px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.question-item:last-child {
+  border-bottom: none;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.question-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: #409eff;
+  margin-right: 10px;
+}
+
+.question-title {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #303133;
+  margin-bottom: 20px;
+}
+
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.option-item:hover {
+  background-color: #f5f7fa;
+}
+
+.answer-card {
+  width: 300px;
   position: sticky;
   top: 20px;
-
-  .card-header {
-    font-weight: bold;
-    font-size: 16px;
-  }
-
-  .answer-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-
-    .answer-item {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #dcdfe6;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-      background: white;
-
-      &:hover {
-        border-color: #409eff;
-        transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
-      }
-
-      &.answered {
-        background: #67c23a;
-        color: white;
-        border-color: #67c23a;
-      }
-
-      &.active {
-        background: #409eff;
-        color: white;
-        border-color: #409eff;
-      }
-    }
-  }
-
-  .answer-legend {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    padding: 15px 0;
-    border-top: 1px solid #ebeef5;
-    border-bottom: 1px solid #ebeef5;
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-
-      .legend-box {
-        width: 20px;
-        height: 20px;
-        border: 2px solid #dcdfe6;
-        border-radius: 4px;
-        background: white;
-
-        &.answered {
-          background: #67c23a;
-          border-color: #67c23a;
-        }
-
-        &.active {
-          background: #409eff;
-          border-color: #409eff;
-        }
-      }
-    }
-  }
-
-  .submit-btn {
-    width: 100%;
-    height: 45px;
-    font-size: 16px;
-    font-weight: bold;
-  }
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
-@media (max-width: 1200px) {
-  .exam-content {
-    grid-template-columns: 1fr;
+.card-header {
+  font-weight: bold;
+  font-size: 16px;
+}
 
-    .answer-sheet {
-      position: static;
-    }
-  }
+.answer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.answer-cell {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: bold;
+}
+
+.answer-cell:hover {
+  border-color: #409eff;
+  transform: scale(1.05);
+}
+
+.answer-cell.answered {
+  background-color: #409eff;
+  color: white;
+  border-color: #409eff;
+}
+
+.answer-cell.unanswered {
+  background-color: white;
+  color: #606266;
+}
+
+.answer-legend {
+  display: flex;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ebeef5;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.legend-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+}
+
+.legend-box.answered {
+  background-color: #409eff;
+}
+
+.legend-box.unanswered {
+  background-color: white;
+}
+
+:deep(.el-radio),
+:deep(.el-checkbox) {
+  width: 100%;
+  margin: 0;
+}
+
+:deep(.el-radio__label),
+:deep(.el-checkbox__label) {
+  white-space: normal;
+  line-height: 1.6;
 }
 </style>

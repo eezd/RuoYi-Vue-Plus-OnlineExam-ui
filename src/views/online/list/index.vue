@@ -61,7 +61,7 @@
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:questionBank:edit']"></el-button>
             </el-tooltip>
             <el-tooltip content="参加考试" placement="top">
-              <el-button type="success" round>参加考试</el-button>
+              <el-button type="success" round @click="startExam(scope.row.id)">参加考试</el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -233,9 +233,37 @@ const submitForm = () => {
   });
 };
 
-/** */
+/** 参加考试 */
+const startExam = async (examId: number) => {
+  try {
+    // 弹出确认框
+    await ElMessageBox.confirm('是否开始考试？开始后计时将立即开始。', '确认开始考试', {
+      confirmButtonText: '是的，开始',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
 
+    // 获取浏览器信息（可传给后端 ua 参数）
+    // const ua = navigator.userAgent;
 
+    // 调用后端接口
+    // const { data } = await startStudentExam(examId, ua);
+
+    // 提示并跳转
+    // ElMessage.success('考试已开始，请专心作答！');
+
+    // 跳转并携带 examId 参数
+    router.push({
+      path: '/online/examinationModule',
+      query: { examId: examId }
+    });
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error(error);
+      ElMessage.error('开始考试失败，请稍后再试');
+    }
+  }
+};
 onMounted(() => {
   getList();
 });

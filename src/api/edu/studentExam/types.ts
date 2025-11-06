@@ -188,3 +188,113 @@ export interface ExamQuery extends PageQuery {
    */
   params?: any;
 }
+
+/**
+ * EduExamResult，考试结果对象 edu_exam_result
+ */
+export interface EduExamResult {
+  /**
+   * 答题快照（JSON格式记录所有答题情况）
+   */
+  answerSnapshot?: string;
+  /**
+   * 客户端IP
+   */
+  clientIp?: string;
+  /**
+   * 正确题目数
+   */
+  correctCount?: number;
+  /**
+   * 创建者
+   */
+  createBy?: number;
+  /**
+   * 创建部门
+   */
+  createDept?: number;
+  /**
+   * 创建时间
+   */
+  createTime?: Date;
+  /**
+   * 考试ID
+   */
+  examId?: number;
+  /**
+   * 实际考试时长（分钟）
+   */
+  examTime?: number;
+  /**
+   * 结果ID
+   */
+  id?: number;
+  /**
+   * 是否已交卷（0否 1是）
+   */
+  isSubmit?: string;
+  /**
+   * 请求参数
+   */
+  params?: { [key: string]: any };
+  /**
+   * 题目总数
+   */
+  questionCount?: number;
+  /**
+   * 备注
+   */
+  remark?: string;
+  /**
+   * 开始考试时间
+   */
+  startTime?: Date;
+  /**
+   * 学生ID
+   */
+  studentId?: number;
+  /**
+   * 交卷时间
+   */
+  submitTime?: Date;
+  /**
+   * 租户编号
+   */
+  tenantId?: string;
+  /**
+   * 总分
+   */
+  totalScore?: number;
+  /**
+   * 更新者
+   */
+  updateBy?: number;
+  /**
+   * 更新时间
+   */
+  updateTime?: Date;
+  /**
+   * 浏览器信息
+   */
+  userAgent?: string;
+  /**
+   * 得分
+   */
+  userScore?: number;
+  /**
+   * 错误题目数
+   */
+  wrongCount?: number;
+  [property: string]: any;
+}
+
+export interface EduExamResultSubmitQuery {
+  /**
+   * 答题快照（JSON格式记录所有答题情况）
+   */
+  answerSnapshot?: string;
+  /**
+   * 考试ID
+   */
+  id?: number;
+}
