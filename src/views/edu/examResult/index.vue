@@ -55,14 +55,14 @@
     <el-card shadow="never">
       <template #header>
         <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
+          <!-- <el-col :span="1.5">
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['edu:examResult:add']">新增</el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['edu:examResult:edit']"
               >修改</el-button
             >
-          </el-col>
+          </el-col> -->
           <el-col :span="1.5">
             <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['edu:examResult:remove']"
               >删除</el-button
@@ -77,8 +77,8 @@
 
       <el-table v-loading="loading" border :data="examResultList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="结果ID" align="center" prop="id" v-if="true" />
-        <el-table-column label="考试ID" align="center" prop="examId" />
+        <!-- <el-table-column label="结果ID" align="center" prop="id" v-if="true" />
+        <el-table-column label="考试ID" align="center" prop="examId" /> -->
         <el-table-column label="学生ID" align="center" prop="studentId" />
         <el-table-column label="开始考试时间" align="center" prop="startTime" width="180">
           <template #default="scope">
@@ -96,18 +96,21 @@
         <el-table-column label="题目总数" align="center" prop="questionCount" />
         <el-table-column label="正确题目数" align="center" prop="correctCount" />
         <el-table-column label="错误题目数" align="center" prop="wrongCount" />
-        <el-table-column label="答题快照" align="center" prop="answerSnapshot" />
+        <!-- <el-table-column label="答题快照" align="center" prop="answerSnapshot" /> -->
         <el-table-column label="是否已交卷" align="center" prop="isSubmit">
           <template #default="scope">
             <dict-tag :options="edu_exam_result_submit" :value="scope.row.isSubmit" />
           </template>
         </el-table-column>
         <el-table-column label="客户端IP" align="center" prop="clientIp" />
-        <el-table-column label="浏览器信息" align="center" prop="userAgent" />
+        <!-- <el-table-column label="浏览器信息" align="center" prop="userAgent" /> -->
         <el-table-column label="备注" align="center" prop="remark" />
         <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip content="查看试卷" placement="top">
+              <el-button link type="primary" icon="PieChart" @click="showExam(scope.row)" v-hasPermi="['edu:examResult:edit']"></el-button>
+            </el-tooltip>
+            <el-tooltip content="查看信息" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:examResult:edit']"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
@@ -169,7 +172,7 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
+          <!-- <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button> -->
           <el-button @click="cancel">取 消</el-button>
         </div>
       </template>
@@ -180,8 +183,12 @@
 <script setup name="ExamResult" lang="ts">
 import { listExamResult, getExamResult, delExamResult, addExamResult, updateExamResult } from '@/api/edu/examResult';
 import { ExamResultVO, ExamResultQuery, ExamResultForm } from '@/api/edu/examResult/types';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+
+const { edu_exam_result_submit } = toRefs<any>(proxy?.useDict('edu_exam_result_submit'));
 
 const examResultList = ref<ExamResultVO[]>([]);
 const buttonLoading = ref(false);
@@ -303,7 +310,7 @@ const handleUpdate = async (row?: ExamResultVO) => {
   const res = await getExamResult(_id);
   Object.assign(form.value, res.data);
   dialog.visible = true;
-  dialog.title = '修改考试结果';
+  dialog.title = '查看考试结果';
 };
 
 /** 提交按钮 */
@@ -332,6 +339,9 @@ const handleDelete = async (row?: ExamResultVO) => {
   await getList();
 };
 
+const showExam = (row) => {
+  router.push({ path: '/online/examinationModule', query: { examId: row.examId } });
+};
 /** 导出按钮操作 */
 const handleExport = () => {
   proxy?.download(

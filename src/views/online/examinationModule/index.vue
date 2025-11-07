@@ -4,11 +4,11 @@
     <el-card class="exam-header" shadow="never">
       <div class="header-content">
         <div class="exam-info">
-          <h2>{{ examInfo.title }}</h2>
+          <h2>{{ title }}</h2>
           <el-tag type="info">总分: {{ examInfo.totalScore }}分</el-tag>
           <el-tag type="warning" style="margin-left: 10px">题目数: {{ questions.length }}</el-tag>
         </div>
-        <div class="time-info">
+        <div class="time-info" v-if="status">
           <el-statistic :value="remainingTime" title="剩余时间(秒)" />
           <el-button type="primary" @click="handleSubmit" :loading="submitting" style="margin-top: 10px"> 提交试卷 </el-button>
         </div>
@@ -16,7 +16,7 @@
     </el-card>
 
     <!-- 答题区域 -->
-    <div class="exam-content">
+    <div class="exam-content" :style="isMobile ? { display: 'flex', flexDirection: 'column' } : {}">
       <!-- 题目列表 -->
       <el-card class="question-area" shadow="never">
         <div v-for="(question, index) in questions" :key="question.id" class="question-item">
@@ -31,7 +31,7 @@
             </el-tag>
           </div>
 
-          {{ question }}
+          <!-- {{ question }} -->
 
           <div class="question-title">{{ question.question_title }}</div>
 
@@ -105,12 +105,20 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { EduExamResult } from '@/api/edu/studentExam/types';
 import { submitStudentExam } from '@/api/edu/studentExam';
+import { useAppStore } from '@/store/modules/app';
 
 const route = useRoute();
 const router = useRouter();
 
+const appStore = useAppStore();
+
+const isMobile = computed(() => appStore.device === 'mobile');
+
+const title = ref('正在考试');
 const examResultId = ref(0);
 const examId = computed(() => route.query.examId as string);
+
+const status = ref(true);
 
 // 添加更新 chooseAnswer 的方法
 const updateChooseAnswer = (question: any) => {
@@ -130,11 +138,13 @@ const updateChooseAnswer = (question: any) => {
 // 初始化考试页面
 const initStartExam = async () => {
   if (examId.value === undefined) {
-    await ElMessageBox.confirm('考试ID为空，无法开始考试。请检查链接或重新进入。', '警告', {
+    await ElMessageBox.confirm('考试ID为空，无法开始考试。', '警告', {
       confirmButtonText: '确定',
       type: 'warning'
     });
-    router.go(-1);
+    status.value = false;
+    title.value = '无法考试';
+    // router.go(-1);
   }
 
   const result = await startStudentExam(examId.value, navigator.userAgent);
@@ -142,6 +152,10 @@ const initStartExam = async () => {
   examResultId.value = result.data.id;
   examInfo.startTime = new Date(result.data.startTime);
   examInfo.examTime = result.data.examTime;
+  if (result.data.isSubmit === '1') {
+    status.value = false;
+    title.value = '正在浏览答卷';
+  }
 
   const answerSnapshot = result.data.answerSnapshot;
 
@@ -240,22 +254,24 @@ const startTimer = () => {
 
   let remainingTimeInSeconds = examInfo.examTime * 60 - timeDifference; // 剩余时间（秒）
 
-  if (remainingTimeInSeconds <= 0) {
-    remainingTimeInSeconds = 0;
-    ElMessage.warning('考试时间已到，自动提交试卷');
-    handleSubmit();
-  }
-
-  remainingTime.value = remainingTimeInSeconds;
-
-  timer.value = window.setInterval(() => {
-    remainingTime.value--; // 每秒钟减少一秒
-    if (remainingTime.value <= 0) {
-      clearInterval(timer.value!);
+  if (!status.value) {
+    if (remainingTimeInSeconds <= 0) {
+      remainingTimeInSeconds = 0;
       ElMessage.warning('考试时间已到，自动提交试卷');
       handleSubmit();
     }
-  }, 1000);
+
+    remainingTime.value = remainingTimeInSeconds;
+
+    timer.value = window.setInterval(() => {
+      remainingTime.value--; // 每秒钟减少一秒
+      if (remainingTime.value <= 0) {
+        clearInterval(timer.value!);
+        ElMessage.warning('考试时间已到，自动提交试卷');
+        handleSubmit();
+      }
+    }, 1000);
+  }
 };
 // 获取题目类型名称
 const getQuestionTypeName = (type: string): string => {
