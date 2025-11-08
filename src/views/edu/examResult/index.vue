@@ -4,13 +4,16 @@
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :model="queryParams" :inline="true">
-            <el-form-item label="考试ID" prop="examId">
-              <el-input v-model="queryParams.examId" placeholder="请输入考试ID" clearable @keyup.enter="handleQuery" />
+            <el-form-item label="考试名称" prop="examName">
+              <el-input v-model="queryParams.examName" placeholder="请输入考试名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="学生ID" prop="studentId">
-              <el-input v-model="queryParams.studentId" placeholder="请输入学生ID" clearable @keyup.enter="handleQuery" />
+            <el-form-item label="学生名称" prop="studentName">
+              <el-input v-model="queryParams.studentName" placeholder="请输入学生名称" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="开始考试时间" prop="startTime">
+            <el-form-item label="班别名称" prop="deptName">
+              <el-input v-model="queryParams.deptName" placeholder="请输入班别名称" clearable @keyup.enter="handleQuery" />
+            </el-form-item>
+            <!-- <el-form-item label="开始考试时间" prop="startTime">
               <el-date-picker clearable v-model="queryParams.startTime" type="date" value-format="YYYY-MM-DD" placeholder="请选择开始考试时间" />
             </el-form-item>
             <el-form-item label="交卷时间" prop="submitTime">
@@ -42,7 +45,7 @@
             </el-form-item>
             <el-form-item label="浏览器信息" prop="userAgent">
               <el-input v-model="queryParams.userAgent" placeholder="请输入浏览器信息" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
+            </el-form-item> -->
             <el-form-item>
               <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -63,14 +66,14 @@
               >修改</el-button
             >
           </el-col> -->
-          <el-col :span="1.5">
+          <!-- <el-col :span="1.5">
             <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['edu:examResult:remove']"
               >删除</el-button
             >
-          </el-col>
-          <el-col :span="1.5">
+          </el-col> -->
+          <!-- <el-col :span="1.5">
             <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['edu:examResult:export']">导出</el-button>
-          </el-col>
+          </el-col> -->
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
       </template>
@@ -79,7 +82,9 @@
         <el-table-column type="selection" width="55" align="center" />
         <!-- <el-table-column label="结果ID" align="center" prop="id" v-if="true" />
         <el-table-column label="考试ID" align="center" prop="examId" /> -->
-        <el-table-column label="学生ID" align="center" prop="studentId" />
+        <el-table-column label="考试名称" align="center" prop="examName" />
+        <el-table-column label="姓名" align="center" prop="nickName" />
+        <el-table-column label="班别" align="center" prop="deptName" />
         <el-table-column label="开始考试时间" align="center" prop="startTime" width="180">
           <template #default="scope">
             <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
@@ -110,9 +115,9 @@
             <el-tooltip content="查看试卷" placement="top">
               <el-button link type="primary" icon="PieChart" @click="showExam(scope.row)" v-hasPermi="['edu:examResult:edit']"></el-button>
             </el-tooltip>
-            <el-tooltip content="查看信息" placement="top">
+            <!-- <el-tooltip content="查看信息" placement="top">
               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['edu:examResult:edit']"></el-button>
-            </el-tooltip>
+            </el-tooltip> -->
             <el-tooltip content="删除" placement="top">
               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['edu:examResult:remove']"></el-button>
             </el-tooltip>
@@ -129,7 +134,7 @@
           <el-input v-model="form.examId" placeholder="请输入考试ID" />
         </el-form-item>
         <el-form-item label="学生ID" prop="studentId">
-          <el-input v-model="form.studentId" placeholder="请输入学生ID" />
+          <el-input v-model="form.examId" placeholder="请输入学生ID" />
         </el-form-item>
         <el-form-item label="开始考试时间" prop="startTime">
           <el-date-picker clearable v-model="form.startTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择开始考试时间">
@@ -182,7 +187,7 @@
 
 <script setup name="ExamResult" lang="ts">
 import { listExamResult, getExamResult, delExamResult, addExamResult, updateExamResult } from '@/api/edu/examResult';
-import { ExamResultVO, ExamResultQuery, ExamResultForm } from '@/api/edu/examResult/types';
+import { EduStudentExamResultVo, ExamResultQuery, ExamResultForm } from '@/api/edu/examResult/types';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -190,7 +195,7 @@ const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 const { edu_exam_result_submit } = toRefs<any>(proxy?.useDict('edu_exam_result_submit'));
 
-const examResultList = ref<ExamResultVO[]>([]);
+const examResultList = ref<EduStudentExamResultVo[]>([]);
 const buttonLoading = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
@@ -290,7 +295,7 @@ const resetQuery = () => {
 };
 
 /** 多选框选中数据 */
-const handleSelectionChange = (selection: ExamResultVO[]) => {
+const handleSelectionChange = (selection: EduStudentExamResultVo[]) => {
   ids.value = selection.map((item) => item.id);
   single.value = selection.length != 1;
   multiple.value = !selection.length;
@@ -304,7 +309,7 @@ const handleAdd = () => {
 };
 
 /** 修改按钮操作 */
-const handleUpdate = async (row?: ExamResultVO) => {
+const handleUpdate = async (row?: EduStudentExamResultVo) => {
   reset();
   const _id = row?.id || ids.value[0];
   const res = await getExamResult(_id);
@@ -331,7 +336,7 @@ const submitForm = () => {
 };
 
 /** 删除按钮操作 */
-const handleDelete = async (row?: ExamResultVO) => {
+const handleDelete = async (row?: EduStudentExamResultVo) => {
   const _ids = row?.id || ids.value;
   await proxy?.$modal.confirm('是否确认删除考试结果编号为"' + _ids + '"的数据项？').finally(() => (loading.value = false));
   await delExamResult(_ids);

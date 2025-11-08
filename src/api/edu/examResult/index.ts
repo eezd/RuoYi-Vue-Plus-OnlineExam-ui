@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { ExamResultVO, ExamResultForm, ExamResultQuery } from '@/api/edu/examResult/types';
+import { ExamResultVO, ExamResultForm, ExamResultQuery, EduStudentExamResultVo } from '@/api/edu/examResult/types';
 
 /**
  * 查询考试结果列表
@@ -8,7 +8,7 @@ import { ExamResultVO, ExamResultForm, ExamResultQuery } from '@/api/edu/examRes
  * @returns {*}
  */
 
-export const listExamResult = (query?: ExamResultQuery): AxiosPromise<ExamResultVO[]> => {
+export const listExamResult = (query?: ExamResultQuery): AxiosPromise<EduStudentExamResultVo[]> => {
   return request({
     url: '/edu/examResult/list',
     method: 'get',
