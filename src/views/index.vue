@@ -19,7 +19,7 @@
       </div>
 
       <!-- 统计卡片 -->
-      <el-row :gutter="20" class="stats-row">
+      <!-- <el-row :gutter="20" class="stats-row">
         <el-col :xs="24" :sm="12" :md="6">
           <div class="stat-card stat-primary">
             <div class="stat-icon">
@@ -64,10 +64,10 @@
             </div>
           </div>
         </el-col>
-      </el-row>
+      </el-row> -->
 
       <!-- 可参加的考试列表 -->
-      <div class="section-card">
+      <!-- <div class="section-card">
         <div class="section-header">
           <h2 class="section-title">
             <i class="el-icon-edit-outline"></i>
@@ -107,10 +107,10 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- 最近考试成绩 -->
-      <div class="section-card">
+      <!-- <div class="section-card">
         <div class="section-header">
           <h2 class="section-title">
             <i class="el-icon-data-line"></i>
@@ -153,7 +153,7 @@
             </template>
           </el-table-column>
         </el-table>
-      </div>
+      </div> -->
     </div>
     <el-divider />
   </div>
